@@ -16,27 +16,28 @@ class BillingProcessor:
         if not items:
             return {"subtotal": 0.0, "fee": 0.0, "total": 0.0}
 
-        subtotal = 0.0
+        subtotal_dec = Decimal("0.00")
         for item in items:
-            price = item.get("price", 0.0)
-            qty = item.get("qty", 1)
-            # BUG 1: Permite cantidades y precios invalidos <= 0
-            subtotal += price * qty
+            price = Decimal(str(item.get("price", 0.0)))
+            qty = Decimal(str(item.get("qty", 0.0)))
+            
+            if price <= 0 or qty <= 0:
+                raise ValueError("Price and qty must be greater than 0")
+            
+            subtotal_dec += price * qty
 
-        # BUG 2: Logica de rangos de comision con off-by-one en limites
-        if subtotal < 100.0:
-            fee_rate = 0.05
-        elif subtotal < 500.0:  # Error: no incluye exactamente 500.0 en el tier 2
-            fee_rate = 0.035
+        if subtotal_dec < Decimal("100.00"):
+            fee_rate = Decimal("0.05")
+        elif subtotal_dec <= Decimal("500.00"):
+            fee_rate = Decimal("0.035")
         else:
-            fee_rate = 0.02
+            fee_rate = Decimal("0.02")
 
-        fee = subtotal * fee_rate
-        total = subtotal + fee
+        fee_dec = subtotal_dec * fee_rate
+        total_dec = subtotal_dec + fee_dec
 
-        # BUG 3: Uso de round() estandar de float en vez de Decimal cuantizado
         return {
-            "subtotal": round(subtotal, 2),
-            "fee": round(fee, 2),
-            "total": round(total, 2)
+            "subtotal": float(subtotal_dec.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)),
+            "fee": float(fee_dec.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)),
+            "total": float(total_dec.quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN))
         }
