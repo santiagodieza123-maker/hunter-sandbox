@@ -1,1 +1,5 @@
-print("Texto incorrecto que rompe las pruebas")
+def main():
+    print('Hello Secure World')
+
+if __name__ == '__main__':
+    main()
