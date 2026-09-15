@@ -1,14 +1,36 @@
 import sys
 import time
 import subprocess
+import json
 from pathlib import Path
 import remediator
 import patcher
 from auditor import CodeAuditor
 from github_manager import GitHubManager
 
+def load_task_data(base_dir: Path):
+    task_file = base_dir / "task.json"
+    if task_file.exists():
+        try:
+            with open(task_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[!] Advertencia: No se pudo leer task.json: {e}")
+    return None
+
 def run_hunt(remote_repo: str = None, branch_name: str = None):
     base_dir = Path.home() / "bounty_hunter"
+    task_data = load_task_data(base_dir)
+
+    issue_number = None
+    if task_data:
+        print(f"[*] Tarea detectada desde task.json: #{task_data.get('number')} - {task_data.get('title')}")
+        if not remote_repo and task_data.get("repo"):
+            remote_repo = task_data.get("repo")
+        issue_number = task_data.get("number")
+        issue = task_data.get("prompt_context", "").strip()
+    else:
+        issue = "El script main.py debe imprimir exactamente 'Hello Secure World'. Cualquier otro texto hara fallar los tests."
 
     if remote_repo:
         repo = base_dir / "workspace_repo"
@@ -25,7 +47,6 @@ def run_hunt(remote_repo: str = None, branch_name: str = None):
 
     target_file = "main.py"
     test_cmd = "python3 test_main.py"
-    issue = "El script main.py debe imprimir exactamente 'Hello Secure World'. Cualquier otro texto hara fallar los tests."
 
     print("=" * 50)
     print("[*] BOUNTY HUNTER INICIANDO SECUENCIA DE REMEDIACION")
@@ -78,12 +99,17 @@ def run_hunt(remote_repo: str = None, branch_name: str = None):
     if remote_repo:
         print("\n[*] Empaquetando y publicando solucion en GitHub...")
         pr_title = f"Fix issue en {target_file}"
+        if issue_number:
+            pr_title = f"Fix #{issue_number}: Correccion automatica en {target_file}"
+
+        fixes_clause = f"\nFixes #{issue_number}\n" if issue_number else ""
         pr_body = (
             f"### Resumen de Remediacion Autonoma\n\n"
+            f"{fixes_clause}"
             f"- **Archivo modificado:** `{target_file}`\n"
-            f"- **Validacion de Tests:** Superada con `{test_cmd}`\n"
-            f"- **Aduanas de Seguridad:** 1, 2, 3, 4 y 5 (Auditor Red Team) aprobadas sin danos colaterales.\n\n"
-            f"> Generado automaticamente por Hunter-Agent."
+            f"- **Validacion de Tests:** Superada con `{test_cmd}` en contenedor aislado\n"
+            f"- **Aduanas de Seguridad:** 1 a 5 (Auditor Red Team en Groq) aprobadas sin daños colaterales.\n\n"
+            f"> Generado automaticamente por Hunter-Agent con sandboxing Docker."
         )
         pr_url = gm.push_and_create_pr(str(repo), branch_name, pr_title, pr_body)
         print(f"[+] Pull Request abierto exitosamente: {pr_url}")

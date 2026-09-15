@@ -1,0 +1,15 @@
+{
+  "model": "claude-3-5-sonnet-20241022",
+  "sandbox": {
+    "enabled": true,
+    "runner": "/home/openclaw/bounty_hunter/runner.py",
+    "image": "opencode-sandbox:latest"
+  },
+  "workspace": {
+    "base_dir": "/home/openclaw/bounty_hunter"
+  },
+  "git_policy": {
+    "auto_branch": true,
+    "pr_template": "fix: resolve issue via OpenCode\n\n- Auditoreado con Pyright/LSP\n- Pruebas validadas en sandbox aislado"
+  }
+}

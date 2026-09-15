@@ -1,2 +1,20 @@
+# Credenciales y secretos
+.env
+*.env
+
+# Entornos virtuales y caché
 .venv/
+venv/
 __pycache__/
+*.pyc
+*.bak
+
+# Espacio de trabajo efímero y tareas del agente
+workspace_repo/
+task.json
+repo_context.xml
+mock_project/
+
+# Logs y sandbox
+sandbox/
+*.log
