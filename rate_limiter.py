@@ -1,34 +1,42 @@
 import time
 import asyncio
-from collections import defaultdict
 from typing import Dict, List
 
 class SlidingWindowLimiter:
     """
-    Rate limiter basado en Sliding Window Log.
-    Vulnerable a condiciones de carrera concurrentes y fuga de memoria.
+    Rate limiter basado en Sliding Window Log con proteccion contra 
+    condiciones de carrera y fugas de memoria.
     """
     def __init__(self, max_requests: int = 5, window_seconds: float = 1.0):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        # VULNERABILIDAD 2: defaultdict nunca elimina claves vacías -> Fuga de memoria
-        self._requests: Dict[str, List[float]] = defaultdict(list)
+        self._requests: Dict[str, List[float]] = {}
+        self._lock = asyncio.Lock()
 
     async def acquire(self, key: str) -> bool:
         now = time.time()
         cutoff = now - self.window_seconds
 
-        # Limpiar timestamps obsoletos
-        timestamps = self._requests[key]
-        valid_timestamps = [t for t in timestamps if t > cutoff]
-        self._requests[key] = valid_timestamps
+        async with self._lock:
+            # Limpieza de la clave específica y purga de claves inactivas
+            keys_to_delete = []
+            for k, timestamps in self._requests.items():
+                valid_timestamps = [t for t in timestamps if t > cutoff]
+                if not valid_timestamps:
+                    keys_to_delete.append(k)
+                else:
+                    self._requests[k] = valid_timestamps
+            
+            for k in keys_to_delete:
+                del self._requests[k]
 
-        # VULNERABILIDAD 1: Race Condition (Check-Then-Act sin sincronización)
-        # Una corrutina cede el control aquí simulando I/O o context switch
-        await asyncio.sleep(0.001)
-
-        if len(self._requests[key]) < self.max_requests:
-            self._requests[key].append(now)
-            return True
-        
-        return False
+            # Obtener timestamps actuales para la clave solicitada
+            timestamps = self._requests.get(key, [])
+            
+            # Verificar capacidad
+            if len(timestamps) < self.max_requests:
+                timestamps.append(now)
+                self._requests[key] = timestamps
+                return True
+            
+            return False
