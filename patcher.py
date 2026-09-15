@@ -72,8 +72,13 @@ def validate_git_diff_scope(repo_dir: Path, allowed_target: str) -> None:
         if len(parts) >= 2:
             modified_files.append(parts[-1])
 
-    # Filtrar posibles archivos residuales de respaldo
-    filtered_changes = [f for f in modified_files if not f.endswith(".bak")]
+    # Filtrar archivos residuales de respaldo y artefactos de compilacion/test
+    ignore_prefixes = ("__pycache__", ".pytest_cache")
+    ignore_extensions = (".bak", ".pyc")
+    filtered_changes = [
+        f for f in modified_files
+        if not f.endswith(ignore_extensions) and not any(f.startswith(pref) for pref in ignore_prefixes)
+    ]
 
     # 1. Validar cantidad de archivos modificados
     if len(filtered_changes) == 0:

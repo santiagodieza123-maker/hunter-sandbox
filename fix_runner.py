@@ -1,4 +1,4 @@
-import subprocess
+content = """import subprocess
 import json
 import argparse
 import shlex
@@ -51,3 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("--lint-file", required=False, default=None)
     args = parser.parse_args()
     print(json.dumps(run_in_sandbox(args.repo, args.cmd, args.lint_file), indent=2))
+"""
+with open("runner.py", "w") as f:
+    f.write(content)
+print("[+] runner.py guardado al 100%.")

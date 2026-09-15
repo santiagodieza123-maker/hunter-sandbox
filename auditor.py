@@ -65,24 +65,19 @@ class CodeAuditor:
             }
 
     def _parse_verdict(self, raw_content: str) -> Dict[str, Any]:
-        lines = [line.strip() for line in raw_content.strip().splitlines() if line.strip()]
-        last_line = lines[-1] if lines else ""
-        
-        match = re.search(r"VERDICT:\s*(APPROVED|REJECTED)(?:\s*\|\s*Motivo:\s*(.*))?", last_line, re.IGNORECASE)
-        if match:
-            verdict = match.group(1).upper()
-            reason = match.group(2).strip() if match.group(2) else ""
+        clean = re.sub(r"<think>.*?</think>", "", raw_content, flags=re.DOTALL).strip()
+        pattern = r"\*{0,2}VERDICT:?\*{0,2}\s*:?\s*(APPROVED|REJECTED)(?:\s*\|\s*(?:Motivo:)?\s*(.*))?"
+        matches = list(re.finditer(pattern, clean, re.IGNORECASE))
+        if matches:
+            last = matches[-1]
             return {
-                "verdict": verdict,
-                "reason": reason,
+                "verdict": last.group(1).upper(),
+                "reason": last.group(2).strip() if last.group(2) else "Aprobado sin observaciones.",
                 "raw_response": raw_content
             }
-        
+
         return {
             "verdict": "REJECTED",
-            "reason": "El modelo no emitió un formato de veredicto determinista válido.",
+            "reason": "El modelo no emitio un formato de veredicto determinista valido.",
             "raw_response": raw_content
         }
-
-if __name__ == "__main__":
-    print("Módulo auditor.py actualizado correctamente con openai/gpt-oss-120b.")

@@ -49,7 +49,7 @@ class GitHubManager:
 
         print(f"Rama '{branch_name}' creada y activada correctamente.")
 
-    def push_and_create_pr(self, work_dir: str, branch_name: str, pr_title: str, pr_body: str) -> str:
+    def push_and_create_pr(self, work_dir: str, branch_name: str, pr_title: str, pr_body: str, target_file: str = "") -> str:
         """
         Hace commit, push a GitHub y abre el Pull Request de forma autónoma.
         """
@@ -58,8 +58,13 @@ class GitHubManager:
             subprocess.run(["git", "-C", work_dir, "config", "user.name", "Hunter-Agent"], check=True)
             subprocess.run(["git", "-C", work_dir, "config", "user.email", "hunter-agent@auto.dev"], check=True)
 
-            # 2. Stage y Commit
-            subprocess.run(["git", "-C", work_dir, "add", "."], check=True)
+            # 2. Limpieza de bytecode y Stage selectivo
+            subprocess.run(["find", work_dir, "-type", "d", "-name", "__pycache__", "-exec", "rm", "-rf", "{}", "+"], check=False)
+            subprocess.run(["find", work_dir, "-type", "f", "-name", "*.pyc", "-delete"], check=False)
+            if target_file and (Path(work_dir) / target_file).exists():
+                subprocess.run(["git", "-C", work_dir, "add", target_file], check=True)
+            else:
+                subprocess.run(["git", "-C", work_dir, "add", "-u"], check=True)
             subprocess.run(["git", "-C", work_dir, "commit", "-m", f"fix: {pr_title}"], check=True)
 
             # 3. Push a la rama remota

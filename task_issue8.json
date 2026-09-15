@@ -1,0 +1,6 @@
+{
+  "title": "BUG: Race Condition (TOCTOU) and Inventory Overselling in Async Checkout",
+  "body": "### Summary\nUnder high concurrency, `inventory_manager.py` allows double-spending and overselling inventory below zero.\n\n### Vulnerability Mechanics\nThe `purchase_item(user_id, item_id, quantity)` coroutine executes a non-atomic Check-Then-Act (TOCTOU):\n1. Reads `available = db.get_stock(item_id)`\n2. Awaits an external payment verification: `await payment_gateway.charge(user_id)`\n3. Writes `db.set_stock(item_id, available - quantity)`\n\nBecause no lock or atomic CAS (Compare-And-Swap) mechanism isolates the checkout lifecycle across tasks, concurrent coroutines interleave at step 2, reading stale state and driving stock into negative balances.\n\n### Expected Behavior\n- Concurrency control must guarantee zero overselling under parallel loads (`asyncio.gather`).\n- If stock is insufficient, raise `InsufficientStockError` without executing payment.\n- Preserve thread-safe and task-safe execution using proper synchronization (`asyncio.Lock` per resource or atomic transaction pattern).\n",
+  "target_file": "inventory_manager.py",
+  "test_file": "tests/test_inventory.py"
+}

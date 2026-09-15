@@ -45,8 +45,8 @@ def run_hunt(remote_repo: str = None, branch_name: str = None):
         repo = base_dir / "mock_project"
         print("[*] Modo Local: mock_project")
 
-    target_file = "main.py"
-    test_cmd = "python3 test_main.py"
+    target_file = task_data.get("target_file", "main.py") if task_data else "main.py"
+    test_cmd = task_data.get("test_cmd", "python3 test_main.py") if task_data else "python3 test_main.py"
 
     print("=" * 50)
     print("[*] BOUNTY HUNTER INICIANDO SECUENCIA DE REMEDIACION")
@@ -111,7 +111,7 @@ def run_hunt(remote_repo: str = None, branch_name: str = None):
             f"- **Aduanas de Seguridad:** 1 a 5 (Auditor Red Team en Groq) aprobadas sin daños colaterales.\n\n"
             f"> Generado automaticamente por Hunter-Agent con sandboxing Docker."
         )
-        pr_url = gm.push_and_create_pr(str(repo), branch_name, pr_title, pr_body)
+        pr_url = gm.push_and_create_pr(str(repo), branch_name, pr_title, pr_body, target_file=target_file)
         print(f"[+] Pull Request abierto exitosamente: {pr_url}")
 
 if __name__ == "__main__":
