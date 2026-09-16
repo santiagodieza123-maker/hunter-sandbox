@@ -31,7 +31,6 @@ async def test_backpressure_isolation():
     await broker.publish("news", "urgent")
     duration = asyncio.get_event_loop().time() - start
 
-    # Si tarda > 0.2s, significa que los envíos no son concurrentes ni encolados
     assert duration < 0.2, "El publish es secuencial y sufre de backpressure."
 
 @pytest.mark.asyncio
@@ -45,7 +44,6 @@ async def test_runtime_mutation():
         c1.messages.append(msg)
     c1.send = evil_send
 
-    # No debe crashear con RuntimeError (Set changed size during iteration)
     await broker.publish("news", "bomb")
 
 @pytest.mark.asyncio
@@ -57,5 +55,4 @@ async def test_memory_leak():
     c1.active = False
     await broker.publish("news", "cleanup")
 
-    # El cliente desconectado debió ser purgado automáticamente
     assert c1 not in broker.topics["news"]

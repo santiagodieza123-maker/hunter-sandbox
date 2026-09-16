@@ -10,7 +10,6 @@ class Client:
     async def send(self, message: str):
         if not self.active:
             raise ConnectionError("Client disconnected")
-        # Simula latencia de red. Un cliente lento bloquea al broker entero.
         await asyncio.sleep(0.1)
         self.messages.append(message)
 
@@ -29,11 +28,8 @@ class PubSubBroker:
 
     async def publish(self, topic: str, message: str):
         if topic in self.topics:
-            # BUG 1: Mutación de set durante iteración
-            # BUG 2: Ejecución secuencial (backpressure) bloquea todo
             for client in self.topics[topic]:
                 try:
                     await client.send(message)
                 except ConnectionError:
-                    # BUG 3: Fuga de memoria. El cliente no se elimina del set.
                     pass
