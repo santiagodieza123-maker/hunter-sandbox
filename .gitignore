@@ -18,3 +18,6 @@ mock_project/
 # Logs y sandbox
 sandbox/
 *.log
+
+# graphify: cada entorno genera su propio grafo (hooks de git en local, SessionStart en la nube)
+graphify-out/

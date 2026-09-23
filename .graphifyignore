@@ -1,0 +1,4 @@
+# Archivos de la herramienta, no del proyecto
+.claude/
+CLAUDE.md
+graphify-out/
