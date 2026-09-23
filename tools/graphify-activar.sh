@@ -16,7 +16,9 @@ cd "$root"
 echo "Activando graphify en: $root"
 
 # 1. Skill /graphify, CLAUDE.md y hooks PreToolUse en modo estricto.
-graphify install --project --strict >/dev/null
+# --platform claude fuerza la variante Bash también en Windows (Claude Code usa Git Bash);
+# si no, Windows instala la variante PowerShell y choca con la de WSL y la nube.
+graphify install --project --strict --platform claude >/dev/null
 
 # 2. Hook de inicio: instala graphify en la nube si falta y refresca el grafo.
 mkdir -p .claude/hooks
