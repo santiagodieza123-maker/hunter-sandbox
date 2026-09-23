@@ -18,3 +18,7 @@ mock_project/
 # Logs y sandbox
 sandbox/
 *.log
+
+# graphify: caché local y costes
+graphify-out/cache/
+graphify-out/cost.json
