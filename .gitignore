@@ -19,7 +19,5 @@ mock_project/
 sandbox/
 *.log
 
-# graphify: caché local y costes
-graphify-out/cache/
-graphify-out/cost.json
-graphify-out/manifest.json
+# graphify: cada entorno genera su propio grafo (hooks de git en local, SessionStart en la nube)
+graphify-out/
