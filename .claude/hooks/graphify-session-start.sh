@@ -7,7 +7,7 @@ if ! command -v graphify >/dev/null 2>&1 && [ "${CLAUDE_CODE_REMOTE:-}" = "true"
   else pip install -q --user graphifyy >/dev/null 2>&1; fi
 fi
 if command -v graphify >/dev/null 2>&1; then
-  cd "${CLAUDE_PROJECT_DIR:-.}" && graphify update . >/dev/null 2>&1
+  cd "${CLAUDE_PROJECT_DIR:-.}" && graphify update . --force >/dev/null 2>&1
 else
   echo "graphify no está instalado: ejecuta 'uv tool install graphifyy'" >&2
 fi
