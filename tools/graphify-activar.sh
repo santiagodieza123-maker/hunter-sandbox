@@ -37,8 +37,9 @@ fi
 exit 0
 EOF
 chmod +x .claude/hooks/graphify-session-start.sh
-# Windows convierte los .sh a CRLF al hacer checkout y bash deja de entenderlos.
-printf '*.sh text eol=lf\n' > .claude/.gitattributes
+# Todo .claude/ en LF: bash no entiende los .sh con CRLF, y en Windows graphify
+# escribe CRLF, lo que haría aparecer como modificados archivos idénticos.
+printf '* text=auto eol=lf\n' > .claude/.gitattributes
 
 # 3. Hooks SessionStart y PostToolUse (grafo al día tras cada edición de Claude).
 uv run --no-project --quiet python - <<'EOF'
@@ -59,6 +60,8 @@ EOF
 # 4. El grafo no se versiona: cada entorno genera el suyo.
 touch .gitignore
 grep -qxF 'graphify-out/' .gitignore || printf '\n# graphify: cada entorno genera su propio grafo\ngraphify-out/\n' >> .gitignore
+# Copias de seguridad que graphify deja al modificar .claude/settings.json.
+grep -qxF '*.graphify-bak' .gitignore || printf '*.graphify-bak\n' >> .gitignore
 [ -f .graphifyignore ] || printf '# Archivos de la herramienta, no del proyecto\n.claude/\nCLAUDE.md\ngraphify-out/\n' > .graphifyignore
 
 # 5. Hooks de git: rehacen el grafo en cada commit y cambio de rama.
@@ -75,6 +78,8 @@ fi
 
 # 6. Primer grafo.
 graphify update . --force 2>&1 | grep -i 'rebuilt' || true
+# Que git no marque como modificados archivos que solo difieren en saltos de línea.
+git update-index -q --refresh >/dev/null 2>&1 || true
 
 echo
 echo "Listo. Para que también funcione en el celular, sube la configuración:"
